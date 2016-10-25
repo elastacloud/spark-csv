@@ -21,7 +21,12 @@ public class JavaCsvSuite {
 
   @Before
   public void setUp() {
-    sqlContext = new SQLContext(new SparkContext("local[2]", "JavaCsvSuite"));
+      SparkSession sparkSession = SparkSession.builder()
+              .master("local[2]")
+              .appName("JavaCsvSuite")
+              .getOrCreate();
+
+      sqlContext = sparkSession.sqlContext();
   }
 
   @After
@@ -32,8 +37,8 @@ public class JavaCsvSuite {
 
   @Test
   public void testCsvParser() {
-    DataFrame df = (new CsvParser()).withUseHeader(true).csvFile(sqlContext, carsFile);
-    int result = df.select("model").collect().length;
+    Dataset<Row> df = (new CsvParser()).withUseHeader(true).csvFile(sqlContext, carsFile);
+    int result = ((Row[])df.select("model").collect()).length;
     Assert.assertEquals(result, numCars);
   }
 
@@ -43,19 +48,19 @@ public class JavaCsvSuite {
     options.put("header", "true");
     options.put("path", carsFile);
 
-    DataFrame df = sqlContext.load("com.databricks.spark.csv", options);
-    int result = df.select("year").collect().length;
+    Dataset<Row> df = sqlContext.load("com.databricks.spark.csv", options);
+    int result = ((Row[])df.select("year").collect()).length;
     Assert.assertEquals(result, numCars);
   }
 
   @Test
   public void testSave() {
-    DataFrame df = (new CsvParser()).withUseHeader(true).csvFile(sqlContext, carsFile);
+    Dataset<Row> df = (new CsvParser()).withUseHeader(true).csvFile(sqlContext, carsFile);
     TestUtils.deleteRecursively(new File(tempDir));
-    df.select("year", "model").save(tempDir, "com.databricks.spark.csv");
+    df.select("year", "model").write().mode(SaveMode.Overwrite).save(tempDir + "/com.databricks.spark.csv");
 
-    DataFrame newDf = (new CsvParser()).csvFile(sqlContext, tempDir);
-    int result = newDf.select("C1").collect().length;
+    Dataset<Row> newDf = (new CsvParser()).csvFile(sqlContext, tempDir);
+    int result = ((Row[])newDf.select("C1").collect()).length;
     Assert.assertEquals(result, numCars);
 
   }

@@ -21,7 +21,7 @@ import java.sql.Timestamp
 
 import com.databricks.spark.csv.util.ParseModes
 import org.apache.hadoop.io.compress.GzipCodec
-import org.apache.spark.sql.{SQLContext, Row, SaveMode}
+import org.apache.spark.sql.{Row, SQLContext, SaveMode, SparkSession}
 import org.apache.spark.{SparkContext, SparkException}
 import org.apache.spark.sql.types._
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
@@ -51,7 +51,12 @@ abstract class AbstractCsvSuite extends FunSuite with BeforeAndAfterAll {
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    sqlContext = new SQLContext(new SparkContext("local[2]", "CsvSuite"))
+    val sparkSession = SparkSession.builder
+      .master("local[2]")
+      .appName("CsvSuite")
+      .getOrCreate()
+
+    sqlContext = sparkSession.sqlContext
   }
 
   override protected def afterAll(): Unit = {
@@ -450,6 +455,7 @@ abstract class AbstractCsvSuite extends FunSuite with BeforeAndAfterAll {
     val copyFilePath = tempEmptyDir + "cars-copy.csv"
 
     val cars = sqlContext.csvFile(carsFile, parserLib = parserLib)
+
     cars.saveAsCsvFile(copyFilePath, Map("header" -> "true"), classOf[GzipCodec])
 
     val carsCopy = sqlContext.csvFile(copyFilePath + "/")
@@ -465,7 +471,7 @@ abstract class AbstractCsvSuite extends FunSuite with BeforeAndAfterAll {
     val copyFilePath = tempEmptyDir + "cars-copy.csv"
 
     val cars = sqlContext.csvFile(carsFile, parserLib = parserLib)
-    cars.save("com.databricks.spark.csv", SaveMode.Overwrite,
+    cars.saveAsCsvFile("com.databricks.spark.csv",
       Map("path" -> copyFilePath, "header" -> "true", "codec" -> classOf[GzipCodec].getName))
     val carsCopyPartFile = new File(copyFilePath, "part-00000.gz")
     // Check that the part file has a .gz extension
@@ -484,7 +490,7 @@ abstract class AbstractCsvSuite extends FunSuite with BeforeAndAfterAll {
     val copyFilePath = tempEmptyDir + "cars-copy.csv"
 
     val cars = sqlContext.csvFile(carsFile, parserLib = parserLib)
-    cars.save("com.databricks.spark.csv", SaveMode.Overwrite,
+    cars.saveAsCsvFile("com.databricks.spark.csv",
       Map("path" -> copyFilePath, "header" -> "true", "codec" -> "gZiP"))
     val carsCopyPartFile = new File(copyFilePath, "part-00000.gz")
     // Check that the part file has a .gz extension

@@ -1,16 +1,16 @@
 name := "spark-csv"
 
-version := "1.4.0-SNAPSHOT"
+version := "1.4.1-SNAPSHOT"
 
 organization := "com.databricks"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
 spName := "databricks/spark-csv"
 
 crossScalaVersions := Seq("2.10.5", "2.11.7")
 
-sparkVersion := "1.6.0"
+sparkVersion := "2.0.1"
 
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
@@ -27,8 +27,8 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core" % testSparkVersion.value % "test" force(),
-  "org.apache.spark" %% "spark-sql" % testSparkVersion.value % "test" force(),
+  "org.apache.spark" % "spark-core_2.11" % "2.0.1" %  "provided",
+  "org.apache.spark" % "spark-sql_2.11" % "2.0.1" %  "provided",
   "org.scala-lang" % "scala-library" % scalaVersion.value % "compile"
 )
 
